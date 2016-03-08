@@ -77,6 +77,7 @@ const Parm_Amber::ParmFlag Parm_Amber::FLAGS[] = {
   { "NONBONDED_PARM_INDEX",       F10I8 },
   { "LENNARD_JONES_ACOEF",        F5E16 },
   { "LENNARD_JONES_BCOEF",        F5E16 },
+  { "LENNARD_JONES_CCOEF",        F5E16 },
   { "EXCLUDED_ATOMS_LIST",        F10I8 },
   { "RADII",                      F5E16 },
   { "SCREEN",                     F5E16 },
