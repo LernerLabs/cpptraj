@@ -165,13 +165,16 @@ typedef std::vector<HB_ParmType> HB_ParmArray;
 /// Hold Lennard-Jones 6-12 interaction A and B parameters
 class NonbondType {
   public:
-    NonbondType() : A_(0), B_(0) {}
-    NonbondType(double a, double b) : A_(a), B_(b) {}
+    NonbondType() : A_(0), B_(0), C_(0) {}
+    NonbondType(double a, double b) : A_(a), B_(b), C_(0) {}
+    NonbondType(double a, double b, double c) : A_(a), B_(b), C_(c) {}
     inline double A() const { return A_; }
     inline double B() const { return B_; }
+    inline double C() const { return C_; }
   private:
     double A_;
     double B_;
+    double C_;
 };
 typedef std::vector<NonbondType> NonbondArray;
 /// Hold nonbonded interaction parameters
