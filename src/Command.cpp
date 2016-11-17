@@ -5,6 +5,7 @@
 #include "BufferedLine.h" // ProcessInput()
 #include "CmdInput.h"     // ProcessInput()
 #include "RPNcalc.h"
+#include "Topic.h"
 #include "Deprecated.h"
 // ----- GENERAL ---------------------------------------------------------------
 #include "Exec_Calc.h"
@@ -354,6 +355,8 @@ void Command::Init() {
   Command::AddCmd( new Analysis_Timecorr(),    Cmd::ANA, 1, "timecorr" );
   Command::AddCmd( new Analysis_VectorMath(),  Cmd::ANA, 1, "vectormath" );
   Command::AddCmd( new Analysis_Wavelet(),     Cmd::ANA, 1, "wavelet" );
+  // HELP TOPICS
+  Command::AddCmd( new Topic_Trajout(),        Cmd::TPC, 1, "trajout_format" );
   // DEPRECATED COMMANDS
   Command::AddCmd( new Deprecated_AvgCoord(),    Cmd::DEP, 1, "avgcoord" );
   Command::AddCmd( new Deprecated_DihScan(),     Cmd::DEP, 1, "dihedralscan" );
@@ -494,6 +497,7 @@ CpptrajState::RetType Command::Dispatch(CpptrajState& State, std::string const& 
         break;
       case Cmd::ACT: ret_val = State.AddToActionQueue( (Action*)obj, cmdArg ); break;
       case Cmd::ANA: ret_val = State.AddToAnalysisQueue( (Analysis*)obj, cmdArg ); break;
+      case Cmd::TPC: mprintf("Run 'help %s' for topic information.\n", cmdArg.Command()); break;
       case Cmd::DEP:
         mprinterr("Error: '%s' is deprecated.\n", cmdArg.Command());
         cmd.Help();
