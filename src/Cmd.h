@@ -16,7 +16,7 @@ class Cmd {
     /// CONSTRUCTOR
     Cmd() : object_(0), dest_(EXE) {}
     /// CONSTRUCTOR - takes destination, DispatchObject pointer, and keywords.
-    Cmd(DispatchObject* o, Sarray k, DestType d) : object_(o), keywords_(k), dest_(d) {}
+    Cmd(DispatchObject* o, Sarray const& k, DestType d) : object_(o), keywords_(k), dest_(d) {}
     /// \return command destination 
     DestType Destination() const { return dest_; }
     /// Iterator for command keywords.

@@ -7,7 +7,7 @@ void Topic_Trajout::PrintTopic(ArgList& argIn) const {
   std::string key = argIn.GetStringNext();
   if (key.empty()) {
     TrajectoryFile::ListFormats();
-    mprintf("  Enter 'help trajout_format <keyword> for in-deoth format information.\n");
+    mprintf("  Enter 'help trajout_format <keyword> for in-depth format information.\n");
   } else {
     if (TrajectoryFile::WriteOptions( key ))
       mprintf("Unrecognized format '%s'.\n", key.c_str());
