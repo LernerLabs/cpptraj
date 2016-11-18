@@ -102,3 +102,19 @@ TrajectoryIO* TrajectoryFile::DetectFormat(FileName const& fname, TrajFormatType
   ttype = UNKNOWN_TRAJ;
   return 0;
 }
+
+int TrajectoryFile::WriteOptions(std::string const& s) {
+  TrajFormatType fmt = (TrajFormatType)FileTypes::GetFormatFromString(TF_KeyArray, s, UNKNOWN_TRAJ);
+  if (fmt == UNKNOWN_TRAJ)
+    return 1;
+  FileTypes::WriteOptions(TF_AllocArray, fmt);
+  return 0;
+}
+
+int TrajectoryFile::ReadOptions(std::string const& s) {
+  TrajFormatType fmt = (TrajFormatType)FileTypes::GetFormatFromString(TF_KeyArray, s, UNKNOWN_TRAJ);
+  if (fmt == UNKNOWN_TRAJ)
+    return 1;
+  FileTypes::ReadOptions(TF_AllocArray, fmt);
+  return 0;
+}

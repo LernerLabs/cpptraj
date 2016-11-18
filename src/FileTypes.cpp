@@ -103,3 +103,31 @@ void FileTypes::WriteOptions(KeyPtr begin, AllocPtr allocArray, FileFormatType U
     }
   }
 }
+
+void FileTypes::WriteOptions(AllocPtr allocArray, FileFormatType FMT) {
+  if (allocArray[FMT].WriteHelp != 0) allocArray[FMT].WriteHelp();
+}
+
+void FileTypes::ReadOptions(AllocPtr allocArray, FileFormatType FMT) {
+  if (allocArray[FMT].ReadHelp != 0) allocArray[FMT].ReadHelp();
+}
+
+void FileTypes::ListFormats(KeyPtr begin, AllocPtr allocArray, FileFormatType UNK) {
+  std::vector<std::string> Descriptions;
+  Descriptions.reserve( UNK );
+  int maxSize = 0;
+  for (int i = 0; i < UNK; i++) {
+    Descriptions.push_back( allocArray[i].Description );
+    maxSize = std::max( maxSize, (int)Descriptions.back().size() );
+  }
+  for (int i = 0; i < UNK; i++) {
+    std::string fmtExtensions = FormatExtensions(begin, i);
+    std::string fmtKeywords =  FormatKeywords(begin, i);
+    if (!fmtKeywords.empty() || !fmtExtensions.empty()) {
+      mprintf("    %*s:", maxSize, Descriptions[i].c_str());
+      if (!fmtKeywords.empty()) mprintf(" %s,", fmtKeywords.c_str());
+      if (!fmtExtensions.empty()) mprintf(" %s", fmtExtensions.c_str());
+      mprintf("\n");
+    }
+  }
+}

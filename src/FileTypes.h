@@ -48,6 +48,12 @@ class FileTypes {
     static void ReadOptions(KeyPtr, AllocPtr, FileFormatType);
     /// List all defined write options.
     static void WriteOptions(KeyPtr, AllocPtr, FileFormatType);
+    /// List write options for specified format
+    static void WriteOptions(AllocPtr, FileFormatType);
+    /// List read options for specified format
+    static void ReadOptions(AllocPtr, FileFormatType);
+    /// List all formats, keywords, and extensions
+    static void ListFormats(KeyPtr, AllocPtr, FileFormatType);
   private:
     static std::string FormatKeywords(KeyPtr, FileFormatType);
     static std::string FormatExtensions(KeyPtr, FileFormatType);

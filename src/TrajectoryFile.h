@@ -30,6 +30,12 @@ class TrajectoryFile {
     static void ReadOptions() { FileTypes::ReadOptions(TF_KeyArray,TF_AllocArray, UNKNOWN_TRAJ); }
     /// List write options for each format.
     static void WriteOptions(){ FileTypes::WriteOptions(TF_KeyArray,TF_AllocArray,UNKNOWN_TRAJ); }
+    /// List write options for format specified by string.
+    static int WriteOptions(std::string const&);
+    /// List read options for format specified by string.
+    static int ReadOptions(std::string const&);
+    /// List all trajectory formats, keywords, and extensions
+    static void ListFormats(){ FileTypes::ListFormats(TF_KeyArray,TF_AllocArray,UNKNOWN_TRAJ); }
     /// \return format type from keyword in ArgList. 
     static TrajFormatType GetFormatFromArg(ArgList& a) {
       return (TrajFormatType)FileTypes::GetFormatFromArg(TF_KeyArray, a, UNKNOWN_TRAJ);

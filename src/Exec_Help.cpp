@@ -1,6 +1,7 @@
 #include "Exec_Help.h"
 #include "CpptrajStdio.h"
 #include "Command.h"
+#include "Topic.h"
 
 void Exec_Help::Help() const {
   mprintf("\t[{ <cmd> | <category>}]\n\tCategories:");
@@ -31,7 +32,11 @@ Exec::RetType Exec_Help::Execute(CpptrajState& State, ArgList& argIn) {
     Cmd const& cmd = Command::SearchToken( arg );
     if (cmd.Empty())
       mprintf("No help found for '%s'\n", arg.Command());
-    else {
+    else if (cmd.Obj().Type() == DispatchObject::TOPIC) {
+      Topic const& topic = static_cast<Topic const&>( cmd.Obj() );
+      arg.MarkArg( 0 );
+      topic.PrintTopic( arg );
+    } else {
       if (cmd.Obj().Type() == DispatchObject::DEPRECATED)
         mprintf("Warning: '%s' is deprecated.\n", arg.Command());
       cmd.Help();
