@@ -313,7 +313,7 @@ tparam1 (string, outstring, len, up, left, argp)
   return outstring;
 }
 
-#ifdef DEBUG
+#ifdef DEBUG_TERMCAP
 
 main (argc, argv)
      int argc;
@@ -329,4 +329,4 @@ main (argc, argv)
   return 0;
 }
 
-#endif /* DEBUG */
+#endif /* DEBUG_TERMCAP */

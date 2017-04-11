@@ -2631,8 +2631,8 @@ static int convex_area (ATOM atom[], RES res[], CYCLE cycle[],
 #ifdef DEBUG
 	printf ("convex face atom %-4s %-4s %4d area: %10.3f\n",
 			atom[ia].anam,
-			res[atom[ia].res].nam,
-			res[atom[ia].res].num,
+			atom[ia].rnam,
+			atom[ia].rnum,
 			face[iface].area);
 
 	printf ("area of face %d = %f\n\n\n", iface, face[iface].area);
@@ -2845,11 +2845,11 @@ static int saddle_area (int n_faces, SADDLE_FACE saddle_face[],
 #ifdef DEBUG
 	printf ("convex face atom %-4s %-4s %4d : %-4s %-4s %4d area: %10.3f\n",
 			atom[ia].anam,
-			res[atom[ia].res].nam,
-			res[atom[ia].res].num,
+			atom[ia].rnam,
+			atom[ia].rnum,
 			atom[ja].anam,
-			res[atom[ja].res].nam,
-			res[atom[ja].res].num,
+			atom[ja].rnam,
+			atom[ja].rnum,
 			saddle_face[iface].area);
 #endif
 
@@ -6918,7 +6918,7 @@ static int non_axial_trim (int nat, ATOM atom[], RES res[], // NOTE: was void
   for (ig = 0; ig < n_groups; ++ig) {
 	printf ("group %d has %d cusp_pairs:", ig, group[ig].n_pairs);
 	for (nc = 0; nc < group[ig].n_pairs; ++nc) {
-	  inew = group[ig].cusp_pair[nc];
+	  int inew = group[ig].cusp_pair[nc];
 	  printf ("  %d (%d %d)", inew, cusp_pair[inew].cusp1, cusp_pair[inew].cusp2);
 	}
 	printf ("\n");
@@ -7239,10 +7239,11 @@ static int broken_concave_area (REAL_T probe_rad,
     for (ic = 0; ic < broken_concave_face[iface].n_cycles; ++ic) {
       printf ("   cycle %d ( ", ic);
       icycle = broken_concave_face[iface].concave_cycle[ic];
+      int ie;
       for (ie = 0; ie < concave_cycle[icycle].nedges; ++ie) {
-        iedge = concave_cycle[icycle].edge[ie];
+        int iedge = concave_cycle[icycle].edge[ie];
         if (concave_cycle[icycle].edge_direction[ie] == -1) {
-          printf (" !", iedge);
+          printf (" !%d", iedge);
         }
         printf ("%d:%d ", concave_edge[iedge].vert1, concave_edge[iedge].vert2);
       }
