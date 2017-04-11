@@ -368,6 +368,9 @@ void Command::Init() {
 
   // Add null ptr to indicate end of command key addresses for ReadLine
   names_.push_back( 0 );
+# ifdef DEBUG
+  CountCommands();
+# endif
 }
 
 /** Free all commands. Should only be called just before program exit. */
@@ -550,4 +553,19 @@ CpptrajState::RetType Command::ProcessInput(CpptrajState& State, std::string con
     return CpptrajState::ERR;
   }
   return cmode;
+}
+
+/** For debug purposes, count commands in each category. */
+void Command::CountCommands() {
+  std::vector<int> count( (int)DispatchObject::DEPRECATED + 1, 0 );
+  unsigned int total = 0;
+  for (CmdList::const_iterator cmd = commands_.begin(); cmd != commands_.end(); ++cmd) {
+    total++;
+    count[ (int)cmd->Obj().Type() ]++;
+  }
+  mprintf("%u commands.\n", total);
+  for (int idx = 1; idx <= (int)DispatchObject::DEPRECATED; idx++)
+    mprintf("  %20s : %i\n", DispatchObject::ObjKeyword( (DispatchObject::Otype)idx ),
+            count[idx]);
+  mprintf("\n");
 }
