@@ -20,8 +20,10 @@ class Command {
     static CpptrajState::RetType ProcessInput(CpptrajState&, std::string const&);
     /// \return Pointer to command name address.
     static const char* CmdToken(int idx) { return names_[idx]; }
+#   ifdef DEBUG
     /// DEBUG: Count commands in each category
     static void CountCommands();
+#   endif
   private:
     static void ListCommandsForType(DispatchObject::Otype);
 

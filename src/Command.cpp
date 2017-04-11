@@ -554,7 +554,7 @@ CpptrajState::RetType Command::ProcessInput(CpptrajState& State, std::string con
   }
   return cmode;
 }
-
+#ifdef DEBUG
 /** For debug purposes, count commands in each category. */
 void Command::CountCommands() {
   std::vector<int> count( (int)DispatchObject::DEPRECATED + 1, 0 );
@@ -563,9 +563,10 @@ void Command::CountCommands() {
     total++;
     count[ (int)cmd->Obj().Type() ]++;
   }
-  mprintf("%u commands.\n", total);
+  mprintf("DEBUG: %u commands.\n", total);
   for (int idx = 1; idx <= (int)DispatchObject::DEPRECATED; idx++)
-    mprintf("  %20s : %i\n", DispatchObject::ObjKeyword( (DispatchObject::Otype)idx ),
+    mprintf("DEBUG:\t  %20s : %i\n", DispatchObject::ObjKeyword( (DispatchObject::Otype)idx ),
             count[idx]);
   mprintf("\n");
 }
+#endif
