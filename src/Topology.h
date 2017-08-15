@@ -112,8 +112,10 @@ class Topology {
     ChamberParmType const& Chamber()        const { return chamber_;      }
     ChamberParmType& SetChamber()                 { return chamber_;      }
     // ----- Misc routines -----------------------
-    /// Format: <res name><res num>@<atom name>
+    /// Format: <res name>_<res num>@<atom name>
     std::string TruncResAtomName(int) const;
+    /// Format:  <res name>_<res num>@<atom name>_<atom num>
+    std::string TruncResAtomNameNum(int) const;
     /// Format: :<res num>@<atom name>
     std::string AtomMaskName(int) const;
     /// Format: <atom name>_<atom num>
@@ -185,8 +187,12 @@ class Topology {
     AngleArray StripAngleArray(AngleArray const&, std::vector<int> const&) const;
     DihedralArray StripDihedralArray(DihedralArray const&, std::vector<int> const&) const;
     void StripBondParmArray(BondArray&, std::vector<int>&, BondParmArray&) const;
+    void StripBondParmArray(BondArray&, std::vector<int>&, BondParmArray&,
+                            BondParmArray const&) const;
     void StripAngleParmArray(AngleArray&, std::vector<int>&, AngleParmArray&) const;
     void StripDihedralParmArray(DihedralArray&, std::vector<int>&, DihedralParmArray&) const;
+    void StripDihedralParmArray(DihedralArray&, std::vector<int>&, DihedralParmArray&,
+                                DihedralParmArray const&) const;
     inline void AddBondArray(BondArray const&, BondParmArray const&, int);
     inline void AddAngleArray(AngleArray const&, AngleParmArray const&, int);
     inline void AddDihArray(DihedralArray const&, DihedralParmArray const&, int);

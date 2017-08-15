@@ -1,5 +1,7 @@
+#include <algorithm> // std::min, std::max
 #include "DataFile.h"
 #include "CpptrajStdio.h"
+#include "StringRoutines.h" // DigitWidth, integerToString
 #ifdef TIMER
 # include "Timer.h"
 #endif
@@ -20,6 +22,9 @@
 #include "DataIO_CCP4.h"
 #include "DataIO_Cmatrix.h"
 #include "DataIO_NC_Cmatrix.h"
+#include "DataIO_CharmmRepLog.h"
+#include "DataIO_CharmmFastRep.h"
+#include "DataIO_CharmmOutput.h"
 
 // CONSTRUCTOR
 DataFile::DataFile() :
@@ -31,7 +36,7 @@ DataFile::DataFile() :
   setDataSetPrecision_(false), //TODO: Just use default_width_ > -1?
   sortSets_(false),
   default_width_(-1),
-  default_precision_(-1),
+  default_precision_(0),
   dataio_(0),
   defaultDim_(3), // default to X/Y/Z dims
   minIsSet_(3, false)
@@ -60,6 +65,9 @@ const FileTypes::AllocToken DataFile::DF_AllocArray[] = {
 # else
   { "NetCDF Cluster matrix file", 0, 0, 0 },
 # endif
+  { "CHARMM REM log",     DataIO_CharmmRepLog::ReadHelp, 0,             DataIO_CharmmRepLog::Alloc},
+  { "CHARMM Fast REM log",0,                             0,            DataIO_CharmmFastRep::Alloc},
+  { "CHARMM Output",      0,                             0,             DataIO_CharmmOutput::Alloc},
   { "Unknown Data file",  0,                       0,                        0                    }
 };
 
@@ -79,13 +87,16 @@ const FileTypes::KeyToken DataFile::DF_KeyArray[] = {
   { CCP4,         "ccp4",   ".ccp4"  },
   { CMATRIX,      "cmatrix",".cmatrix" },
   { NCCMATRIX,    "nccmatrix", ".nccmatrix" },
+  { CHARMMREPD,   "charmmrepd",".exch" },
+  { CHARMMOUT,    "charmmout", ".charmmout"},
   { UNKNOWN_DATA, 0,        0        }
 };
 
 void DataFile::WriteHelp() {
   mprintf("\t[<format keyword>]\n"
           "\t[{xlabel|ylabel|zlabel} <label>] [{xmin|ymin|zmin} <min>] [sort]\n"
-          "\t[{xstep|ystep|zstep} <step>] [time <dt>] [prec <width>[.<precision>]]\n");
+          "\t[{xstep|ystep|zstep} <step>] [time <dt>] [prec <width>[.<precision>]]\n"
+          "\t[xprec <width>[.<precision>]] [xfmt {double|scientific|general}]\n");
 }
 
 // DataFile::DetectFormat()
@@ -113,10 +124,16 @@ void DataFile::SetDebug(int debugIn) {
 
 inline int Error(const char* msg) { mprinterr(msg); return 1; }
 
+int DataFile::ReadDataIn(FileName const& fnameIn, ArgList const& argListIn, 
+                         DataSetList& datasetlist)
+{
+  return ReadDataIn(fnameIn, argListIn, datasetlist, -1, -1);
+}
+
 // DataFile::ReadDataIn()
 // TODO: Should this read to internal DataSetList?
 int DataFile::ReadDataIn(FileName const& fnameIn, ArgList const& argListIn, 
-                         DataSetList& datasetlist)
+                         DataSetList& datasetlist, int idx, int maxidx)
 {
   if (fnameIn.empty()) return Error("Error: No input data file name given.\n"); 
   ArgList argIn = argListIn;
@@ -149,6 +166,8 @@ int DataFile::ReadDataIn(FileName const& fnameIn, ArgList const& argListIn,
   // Check if user specifed DataSet name; otherwise use filename base.
   std::string dsname = argIn.GetStringKey("name");
   if (dsname.empty()) dsname = filename_.Base();
+  if (idx > -1)
+    dsname.append("_" + integerToString(idx, DigitWidth(maxidx)));
   mprintf("\tReading '%s' as %s with name '%s'\n", filename_.full(), 
           FileTypes::FormatDescription(DF_AllocArray,dfType_), dsname.c_str());
   // Read data
@@ -222,15 +241,13 @@ int DataFile::SetupDatafile(FileName const& fnameIn, ArgList& argIn,
   return 0;
 }
 
-int DataFile::SetupStdout(ArgList const& argIn, int debugIn) {
+int DataFile::SetupStdout(ArgList& argIn, int debugIn) {
   SetDebug( debugIn );
   filename_.clear();
   dataio_ = (DataIO*)FileTypes::AllocIO( DF_AllocArray, DATAFILE, false );
   if (dataio_ == 0) return Error("Error: Data file allocation failed.\n");
-  if (!argIn.empty()) {
-    ArgList args( argIn );
-    ProcessArgs( args );
-  }
+  if (!argIn.empty())
+    ProcessArgs( argIn );
   return 0;
 }
 
@@ -300,6 +317,18 @@ int DataFile::RemoveDataSet(DataSet* dataIn) {
   return 0;
 }
 
+static inline int GetPrecisionArg(std::string const& prec_str, int& width, int& prec)
+{
+  ArgList prec_arg(prec_str, ".");
+  width = prec_arg.getNextInteger(width);
+  if (width < 0) {
+    mprinterr("Error: Invalid width in prec arg '%s'\n", prec_str.c_str());
+    return 1;
+  }
+  prec = prec_arg.getNextInteger(prec);
+  return 0;
+}
+
 // DataFile::ProcessArgs() // FIXME make WriteArgs
 int DataFile::ProcessArgs(ArgList &argIn) {
   if (dataio_==0) return 1;
@@ -334,15 +363,38 @@ int DataFile::ProcessArgs(ArgList &argIn) {
   // Default DataSet width/precision
   std::string prec_str = argIn.GetStringKey("prec");
   if (!prec_str.empty()) {
-    ArgList prec_arg(prec_str, ".");
-    default_width_ = prec_arg.getNextInteger(-1);
-    if (default_width_ < 0) {
-      mprinterr("Error: Invalid width in prec arg '%s'\n", prec_str.c_str());
-      return 1;
-    }
-    default_precision_ = prec_arg.getNextInteger(0);
-    setDataSetPrecision_ = true;
-  } 
+    if (GetPrecisionArg( prec_str, default_width_, default_precision_ )) return 1;
+    mprintf("\tSetting data file '%s' width.precision to %i.%i\n",
+            filename_.base(), default_width_, default_precision_);
+    SetDataFilePrecision(default_width_, default_precision_);
+  }
+  // X column args. Start with defaults.
+  std::string fmt_str = argIn.GetStringKey("xfmt");
+  // X column format
+  if (!fmt_str.empty()) {
+    TextFormat::FmtType xfmt = dataio_->XcolFmt();
+    if (fmt_str == "double")
+      xfmt = TextFormat::DOUBLE;
+    else if (fmt_str == "scientific")
+      xfmt = TextFormat::SCIENTIFIC;
+    else if (fmt_str == "general")
+      xfmt = TextFormat::GDOUBLE;
+    else
+      mprintf("Warning: Expected either 'double', 'scientific', or 'general'. Ignoring 'xfmt %s'.\n", fmt_str.c_str());
+    mprintf("\tSetting data file '%s' x column format to '%s'\n",
+            filename_.base(), TextFormat::typeDescription(xfmt));
+    dataio_->SetXcolFmt( xfmt ); 
+  }
+  // X column width/precision
+  prec_str = argIn.GetStringKey("xprec");
+  if (!prec_str.empty()) {
+    int xw = dataio_->XcolWidth();
+    int xp = dataio_->XcolPrec();
+    if (GetPrecisionArg( prec_str, xw, xp )) return 1;
+    mprintf("\tSetting data file '%s' x column width.precision to %i.%i\n",
+            filename_.base(), xw, xp);
+    dataio_->SetXcolPrec(xw, xp);
+  }
   if (dataio_->processWriteArgs(argIn)==1) return 1;
   //if (debug_ > 0) argIn.CheckForMoreArgs();
   return 0;

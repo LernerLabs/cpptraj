@@ -1,9 +1,11 @@
+#include <algorithm> // std::min, std::max
 #include "TopInfo.h"
 #include "CpptrajStdio.h"
 #include "StringRoutines.h" // DigitWidth
 #include "Constants.h" // RADDEG
 #include "DistRoutines.h" // DIST_NoImage
 #include "TorsionRoutines.h" // CalcAngle, Torsion
+#include "Mol.h"
 
 /// DESTRUCTOR
 TopInfo::~TopInfo() {
@@ -12,10 +14,10 @@ TopInfo::~TopInfo() {
 }
 
 /// CONSTRUCTOR - To Stdout
-TopInfo::TopInfo(Topology* pIn) { SetupTopInfo( 0, pIn, 0 ); }
+TopInfo::TopInfo(Topology const* pIn) { SetupTopInfo( 0, pIn, 0 ); }
 
 // TopInfo::SetupTopInfo()
-int TopInfo::SetupTopInfo(CpptrajFile* fIn, Topology* pIn, DataSet_Coords* cIn) {
+int TopInfo::SetupTopInfo(CpptrajFile* fIn, Topology const* pIn, DataSet_Coords* cIn) {
   if (cIn == 0 && pIn == 0) {
     mprinterr("Internal Error: TopInfo: Null topology\n");
     return 1;
@@ -195,6 +197,41 @@ int TopInfo::PrintMoleculeInfo(std::string const& maskString) const {
       }
     }
   }
+  return 0;
+}
+
+// TopInfo::PrintShortMolInfo()
+int TopInfo::PrintShortMolInfo(std::string const& maskString) const {
+  if (parm_->Nmol() < 1)
+    mprintf("\t'%s' No molecule info.\n", parm_->c_str());
+  else {
+    CharMask mask( maskString );
+    if (parm_->SetupCharMask( mask )) return 1;
+    if ( mask.None() )
+      mprintf("\tSelection is empty.\n");
+    else {
+      Mol::Marray mols = Mol::UniqueCount(*parm_, mask);
+      // Determine max counts for nice output formatting
+      int maxNatom = 0;
+      int maxNres = 0;
+      unsigned int maxCount = 0;
+      for (Mol::Marray::const_iterator mol = mols.begin(); mol != mols.end(); ++mol) {
+        maxNatom = std::max( maxNatom, mol->natom_ );
+        maxNres  = std::max( maxNres,  mol->nres_  );
+        maxCount = std::max( maxCount, (unsigned int)mol->idxs_.size() );
+      }
+      int awidth = std::max(5, DigitWidth(maxNatom));
+      int rwidth = std::max(5, DigitWidth(maxNres ));
+      int mwidth = std::max(5, DigitWidth(maxCount));
+      outfile_->Printf("%-4s %*s %*s %*s\n", "#Mol", mwidth, "Count", 
+                       awidth, "Natom", rwidth, "Nres");
+      for (Mol::Marray::const_iterator mol = mols.begin(); mol != mols.end(); ++mol)
+        outfile_->Printf("%-4s %*u %*i %*i\n", mol->name_.c_str(),
+                         mwidth, mol->idxs_.size(),
+                         awidth, mol->natom_,
+                         rwidth, mol->nres_);
+    } // END selection not empty
+  } // END parm has molecules
   return 0;
 }
 

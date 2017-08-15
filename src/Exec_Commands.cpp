@@ -78,7 +78,7 @@ void Exec_ListAll::Help() const {
 void Exec_SilenceActions::Help() const { mprintf("Silence Actions Init/Setup output.\n"); }
 // -----------------------------------------------------------------------------
 void Exec_DataFileCmd::Help() const {
-  mprintf("\t<data filename> <datafile cmd>\n"
+  mprintf("\t{<data filename> | *} <datafile cmd>\n"
           "  Pass <datafile cmd> to specified data file currently in data file list.\n");
   DataFile::WriteHelp();
   DataFile::WriteOptions();
@@ -115,7 +115,7 @@ Exec::RetType Exec_SelectDS::Execute(CpptrajState& State, ArgList& argIn) {
   std::string dsarg = argIn.GetStringNext();
   DataSetList dsets = State.DSL().GetMultipleSets( dsarg );
   if (!dsets.empty()) {
-    mprintf("SelectDS: Arg '%s':", dsarg.c_str());
+    mprintf("SelectDS: Arg '%s':\n", dsarg.c_str());
     dsets.List();
   }
   return CpptrajState::OK;
