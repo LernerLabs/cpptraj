@@ -12,6 +12,7 @@ Traj_CharmmDcd::Traj_CharmmDcd() :
   dcdframes_(0),
   isBigEndian_(false),
   is64bit_(false),
+  forceRead_(false),
   blockSize_(4),
   dcd_dim_(3),
   boxBytes_(0),
@@ -200,7 +201,8 @@ void Traj_CharmmDcd::setFrameSizes() {
 }
 
 void Traj_CharmmDcd::ReadHelp() {
-  mprintf("\tucell | shape: Force reading of box info as unit cell or shape matrix.\n");
+  mprintf("\tucell | shape : Force reading of box info as unit cell or shape matrix.\n"
+          "\tforceread     : Force reading even if version in header not recognized.\n");
 }
 
 int Traj_CharmmDcd::processReadArgs(ArgList& argIn) {
@@ -210,6 +212,7 @@ int Traj_CharmmDcd::processReadArgs(ArgList& argIn) {
     charmmCellType_ = SHAPE;
   else
     charmmCellType_ = UNKNOWN;
+  forceRead_ = argIn.hasKey("forceread");
   return 0;
 }
 
@@ -293,18 +296,24 @@ int Traj_CharmmDcd::readDcdHeader() {
   }
   // Make sure this is Charmm format; last integer in the header should not
   // be zero.
-  if ( buffer.i[19] != 0 ) {
-    if (debug_>0) mprintf("\tCharmm DCD\n");
-    // Check for Charmm-specific flags
-    //if ( buffer.i[10] != 0 ) dcdExtraBlock = true;
-    if ( buffer.i[11] != 0 ) 
-      dcd_dim_ = 4;
-    else
-      dcd_dim_ = 3;
-  } else {
-    mprinterr("\tNon-charmm DCD - currently unsupported.\n");
-    return 1;
+  if ( buffer.i[19] == 0) {
+    if (forceRead_)
+      mprintf("Warning: Version in header is 0."
+              " This Charmm trajectory may not process correctly.\n");
+    else {
+      mprinterr("\tNon-charmm DCD - currently unsupported.\n");
+      return 1;
+    }
   }
+     
+  if (debug_>0) mprintf("\tCharmm DCD\n");
+  // Check for Charmm-specific flags
+  //if ( buffer.i[10] != 0 ) dcdExtraBlock = true;
+  if ( buffer.i[11] != 0 ) 
+    dcd_dim_ = 4;
+  else
+    dcd_dim_ = 3;
+
   // Number of sets
   dcdframes_ = buffer.i[0];
   // Starting timestep
