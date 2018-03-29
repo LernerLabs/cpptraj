@@ -18,15 +18,15 @@ class Traj_PDBfile: public TrajectoryIO {
     Traj_PDBfile();
     static BaseIOtype* Alloc() { return (BaseIOtype*)new Traj_PDBfile(); }
     static void WriteHelp();
+    int setupTrajout(FileName const&, Topology*, CoordinateInfo const&,int, bool); // DEBUG public
+    int writeFrame(int,Frame const&); // DEBUG public
+    void closeTraj(); // DEBUG public
   private:
     // Inherited functions
     bool ID_TrajFormat(CpptrajFile&);
     int setupTrajin(FileName const&, Topology*);
-    int setupTrajout(FileName const&, Topology*, CoordinateInfo const&,int, bool);
     int openTrajin();
-    void closeTraj();
     int readFrame(int,Frame&);
-    int writeFrame(int,Frame const&);
     void Info();
     int processWriteArgs(ArgList&);
     int readVelocity(int, Frame&) { return 1; }

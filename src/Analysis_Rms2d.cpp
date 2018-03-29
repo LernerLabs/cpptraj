@@ -6,6 +6,7 @@
 #ifdef _OPENMP
 #  include <omp.h>
 #endif
+#include "Traj_PDBfile.h" // DEBUG
 
 // CONSTRUCTOR
 Analysis_Rms2d::Analysis_Rms2d() :
@@ -196,6 +197,12 @@ Analysis::RetType Analysis_Rms2d::Analyze() {
   * frame in Coords.
   */
 int Analysis_Rms2d::CalcRmsToTraj() {
+  // DEBUG - for writing target and reference frames.
+  Traj_PDBfile TRAJ_TGT, TRAJ_REF;
+  Topology* ttop = coords_->Top().modifyStateByMask( TgtMask_ );
+  Topology* rtop = RefTraj_->Top().modifyStateByMask( RefMask_ );
+  TRAJ_TGT.setupTrajout("tgt.pdb", ttop, coords_->CoordsInfo(), coords_->Size(), false);
+  TRAJ_REF.setupTrajout("ref.pdb", rtop, RefTraj_->CoordsInfo(), RefTraj_->Size(), false);
   float R = 0.0;
   Frame RefFrame = RefTraj_->AllocateFrame();
   // Setup reference frame for selected reference atoms
@@ -220,10 +227,12 @@ int Analysis_Rms2d::CalcRmsToTraj() {
     SelectedRef.SetCoordinates(RefFrame, RefMask_);
     if (mode_ == RMS_FIT || mode_ == SRMSD)
       SelectedRef.CenterOnOrigin(useMass_);
+    TRAJ_REF.writeFrame(nref, SelectedRef);
     // LOOP OVER TARGET FRAMES
     for (size_t nframe=0; nframe < totaltgt; nframe++) {
       // Get selected atoms of the current target frame
       coords_->GetFrame( nframe, SelectedTgt, TgtMask_ );
+      TRAJ_TGT.writeFrame(nframe*nref + nframe, SelectedTgt);
       switch (mode_) {
         case RMS_FIT:   R = (float)SelectedTgt.RMSD_CenteredRef(SelectedRef, useMass_); break;
         case RMS_NOFIT: R = (float)SelectedTgt.RMSD_NoFit(SelectedRef, useMass_); break;
@@ -235,6 +244,10 @@ int Analysis_Rms2d::CalcRmsToTraj() {
       //mprinterr("%12i %12i %12.4lf\n",nref,nframe,R);
     } // END loop over target frames
   } // END loop over reference frames
+  TRAJ_REF.closeTraj();
+  TRAJ_TGT.closeTraj();
+  delete ttop;
+  delete rtop;
   return 0;
 }
 
@@ -244,6 +257,12 @@ int Analysis_Rms2d::CalcRmsToTraj() {
   * matrix, otherwise a full matrix is needed.
   */
 int Analysis_Rms2d::Calculate_2D() {
+  // DEBUG - for writing target and reference frames.
+  Traj_PDBfile TRAJ_TGT, TRAJ_REF;
+  Topology* ttop = coords_->Top().modifyStateByMask( TgtMask_ );
+  CoordinateInfo cinfo(Box(), false, false, false);
+  TRAJ_TGT.setupTrajout("tgt.pdb", ttop, cinfo, coords_->Size(), false);
+  TRAJ_REF.setupTrajout("ref.pdb", ttop, cinfo, coords_->Size(), false);
   float R = 0.0;
   int nref, ntgt, tgtstart; 
   int totalref = coords_->Size();
@@ -261,6 +280,7 @@ int Analysis_Rms2d::Calculate_2D() {
   SelectedRef.SetupFrameFromMask( RefMask_, coords_->Top().Atoms() );
   SelectedTgt.SetupFrameFromMask( TgtMask_, coords_->Top().Atoms() );
   ParallelProgress progress( totalref );
+  int tgtidx = 0; // DEBUG
   // LOOP OVER REFERENCE FRAMES
 # ifdef _OPENMP
   SymmetricRmsdCalc SRMSD_OMP = SRMSD_;
@@ -277,6 +297,7 @@ int Analysis_Rms2d::Calculate_2D() {
       // Select and pre-center reference atoms (if fitting)
       if (mode_ == RMS_FIT || mode_ == SRMSD)
         SelectedRef.CenterOnOrigin(useMass_);
+      TRAJ_REF.writeFrame(nref, SelectedRef);
       // LOOP OVER TARGET FRAMES
       if (calculateFullMatrix)
         tgtstart = 0;
@@ -285,6 +306,7 @@ int Analysis_Rms2d::Calculate_2D() {
       for (ntgt = tgtstart; ntgt < totalref; ntgt++) {
         // Get the current target frame
         coords_->GetFrame( ntgt, SelectedTgt, TgtMask_ );
+        TRAJ_TGT.writeFrame(tgtidx++, SelectedTgt);
         switch (mode_) {
           case RMS_FIT:   R = (float)SelectedTgt.RMSD_CenteredRef(SelectedRef, useMass_); break;
           case RMS_NOFIT: R = (float)SelectedTgt.RMSD_NoFit(SelectedRef, useMass_); break;
@@ -306,6 +328,9 @@ int Analysis_Rms2d::Calculate_2D() {
 # endif
   progress.Finish();
   if (Ct_ != 0) CalcAutoCorr( );
+  TRAJ_REF.closeTraj();
+  TRAJ_TGT.closeTraj();
+  delete ttop;
   return 0;
 }
 
