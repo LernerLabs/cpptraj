@@ -1031,6 +1031,7 @@ double Frame::RMSD_CenteredRef( Frame const& Ref, Matrix_3x3& U, Vec3& Trans, bo
       Trans[2] += X_[ix+2];
     }
   }
+  mprintf("DEBUG: total mass= %f\n", total_mass);
   if (total_mass<Constants::SMALL) {
     mprinterr("Error: Frame::RMSD: Divide by zero.\n");
     return -1;
